@@ -1,0 +1,119 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remote Demo</title>
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      transition: background 0.4s;
+    }
+
+    #panel {
+      text-align: center;
+      padding: 30px;
+    }
+
+    #status {
+      color: #00ff88;
+      margin-bottom: 20px;
+    }
+
+    #screen {
+      font-size: 28px;
+      margin: 30px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="panel">
+  <div id="status">● Подключение...</div>
+
+  <div id="screen">
+    Тестовое устройство
+  </div>
+
+  <p id="message">
+    Ожидание команды...
+  </p>
+</div>
+
+<script>
+  /*
+    Эта страница управляет только своим HTML-интерфейсом.
+    Она НЕ получает доступ к телефону, файлам, камере
+    или другим приложениям.
+  */
+
+  const status = document.getElementById("status");
+  const screen = document.getElementById("screen");
+  const message = document.getElementById("message");
+
+  // Подключение к WebSocket-серверу.
+  // Сервер должен работать на твоём компьютере.
+  const socket = new WebSocket(
+    `ws://${location.hostname}:8080`
+  );
+
+  socket.onopen = () => {
+    status.textContent = "● Подключено";
+    status.style.color = "#00ff88";
+  };
+
+  socket.onclose = () => {
+    status.textContent = "● Нет соединения";
+    status.style.color = "#ff4444";
+  };
+
+  socket.onerror = () => {
+    status.textContent = "● Ошибка подключения";
+    status.style.color = "#ff4444";
+  };
+
+  socket.onmessage = (event) => {
+
+    let command;
+
+    try {
+      command = JSON.parse(event.data);
+    } catch {
+      return;
+    }
+
+    // Изменить текст
+    if (command.type === "text") {
+      message.textContent = command.value;
+    }
+
+    // Изменить заголовок
+    if (command.type === "title") {
+      screen.textContent = command.value;
+    }
+
+    // Изменить фон
+    if (command.type === "background") {
+      document.body.style.background = command.value;
+    }
+
+    // Показать сообщение
+    if (command.type === "alert") {
+      alert(command.value);
+    }
+  };
+</script>
+
+</body>
+</html>
+```
